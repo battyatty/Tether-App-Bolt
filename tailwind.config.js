@@ -4,6 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
+       // Tidewake Theme
+        Tidewake: {
+          tidewake: '#F7F4F0',
+          100: '#EDE5DA',
+          200: '#E2D5C5',
+          300: '#D7C5B0',
+          400: '#CCB59B',
+          500: '#C1A78F',
+          600: '#B69780',
+          700: '#AB8771',
+          800: '#A07762',
+          900: '#956753'
+        },
         // Grounded Serenity Theme
         rope: {
           50: '#F7F4F0',
