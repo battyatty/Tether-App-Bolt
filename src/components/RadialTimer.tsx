@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 interface RadialTimerProps {
   timeLeft: number;
   duration: number;
+  progress: number;
   isOvertime: boolean;
   displayTime: string;
   isRunning: boolean;
@@ -12,15 +13,14 @@ interface RadialTimerProps {
 const RadialTimer: React.FC<RadialTimerProps> = ({
   timeLeft,
   duration,
+  progress,
   isOvertime,
   displayTime,
   isRunning
 }) => {
   const radius = 130;
   const circumference = 2 * Math.PI * radius;
-  const progress = isOvertime
-  ? 0
-  : (Math.max(timeLeft, 0) / (duration * 60)) * circumference;
+  const strokeDashoffset = circumference * (1 - progress);
 
   const getTimerColor = () => {
     if (!isRunning) return 'text-amber-500';
@@ -30,45 +30,42 @@ const RadialTimer: React.FC<RadialTimerProps> = ({
 
   return (
     <div className="relative w-[280px] h-[280px]">
-     <svg className="w-[280px] h-[280px]">
-  <circle
-    cx="140"
-    cy="140"
-    r={radius}
-    stroke="currentColor"
-    strokeWidth="12"
-    fill="none"
-    className="text-gray-100"
-    transform="rotate(-90 140 140)"
-  />
-  {!isOvertime ? (
-   <circle
-  cx="140"
-  cy="140"
-  r={radius}
-  stroke="currentColor"
-  strokeWidth="12"
-  fill="none"
-  strokeDasharray={circumference}
-  strokeDashoffset={circumference - progress}
-  className="text-blue-500 transition-all duration-1000 ease-linear"
-  strokeLinecap="round"
-  transform="rotate(-90 140 140)"
-/>
-  ) : (
-    <circle
-      cx="140"
-      cy="140"
-      r={radius}
-      stroke="currentColor"
-      strokeWidth="12"
-      fill="none"
-      className="text-red-500 animate-pulse"
-      strokeLinecap="round"
-      transform="rotate(-90 140 140)"
-    />
-  )}
-</svg>
+      <svg className="w-[280px] h-[280px] transform -rotate-90">
+        <circle
+          cx="140"
+          cy="140"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="12"
+          fill="none"
+          className="text-gray-100"
+        />
+        {!isOvertime ? (
+          <circle
+            cx="140"
+            cy="140"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="12"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className="text-blue-500 transition-all duration-1000 ease-linear"
+            strokeLinecap="round"
+          />
+        ) : (
+          <circle
+            cx="140"
+            cy="140"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="12"
+            fill="none"
+            className="text-red-500 animate-pulse"
+            strokeLinecap="round"
+          />
+        )}
+      </svg>
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
         {isOvertime && isRunning && (
           <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">

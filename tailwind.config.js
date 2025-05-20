@@ -6,44 +6,44 @@ export default {
       colors: {
        // Tidewake Theme
         Tidewake: {
-          // 🌊 Core Blues
-          background: '#6389C9',        // tetherBlue – app background
-          backgroundAlt: '#6992D6',     // tetherBlue2 – slight variation for selections
-          cardShadow: '#587EBF',        // deckShadow – card shadows
-          text: '#556996',              // primaryTextBlue – body text
-          icon: '#535992',              // iconRoyal – button icons
-          card: '#DBE9FF',              // fogBank – card background
-          accentSoft: '#A0D6FF',        // seaBurst – hover/edge accents
-          sectionHeader: '#89B0EE',     // babyBlanket – section titles, pause button
-          noteBackground: '#B2CFFF',    // sirenFog – task notes background
-          anchorInactive: '#98B0D7',    // sirenFog2 – off anchor states
-          textAlt: '#426092',           // cornflowerFaded – secondary text
-          buttonBg: '#2D4877',          // cornflower – button 3, radial bg
-          accentKB: '#0F2E4D',          // deepCurrent – kitblock accents, focus OFF
+        // 🌊 Core Blues
+        background: '#6389C9',        // tetherBlue – main app background
+        backgroundAlt: '#6992D6',     // tetherBlue2 – subtle background variation
+        cardShadow: '#587EBF',        // deckShadow – hard 3D offset under cards
+        card: '#DBE9FF',              // fogBank – card background
+        text: '#556996',              // primaryTextBlue – main body text
+        textAlt: '#426092',           // cornflowerFaded – secondary text / timestamps
+        icon: '#535992',              // iconRoyal – 3-dot menu & general icons
+        accentSoft: '#A0D6FF',        // seaBurst – default card border / hover edge
+        sectionHeader: '#89B0EE',     // babyBlanket – headings, pause button
+        noteBackground: '#B2CFFF',    // sirenFog – task note field
+        anchorInactive: '#98B0D7',    // sirenFog2 – non-active anchor icons
+        buttonBg: '#2D4877',          // cornflower – radial bg / deep button base
+        accentKB: '#0F2E4D',          // deepCurrent – Kitblock & focus-off color
       
-          // 🐚 Teals (Core Motion / Flow)
-          playIcon: '#138C76',          // serpentine – play button icon
-          playRing: '#54D9C1',          // kelpglow – ring around play
-          timer: '#87E4D3',             // tidewake – radial & countdown color
-          tealAccent: '#A3F9DD',        // driftglass – icon highlight
-          tealAccentAlt: '#B6FFF2',     // driftglass2 – decorative hover
+        // 🐚 Teals (Motion / Flow)
+        playIcon: '#138C76',          // serpentine – play triangle icon
+        playRing: '#54D9C1',          // kelpglow – play button background
+        timer: '#87E4D3',             // tidewake – radial + countdown border
+        tealAccent: '#A3F9DD',        // driftglass – hover accent
+        tealAccentAlt: '#B6FFF2',     // driftglass2 – hover or border variant
       
-          // 🟢 Greens (Success / Active)
-          success: '#B0FA98',           // limarita – complete button, progress bar, glow
-          successIcon: '#569F3B',       // plankton – checkmark
+        // 🟢 Greens (Success / Active)
+        success: '#B0FA98',           // limarita – progress bar, completed tasks
+        successIcon: '#569F3B',       // plankton – checkmarks
       
-          // 🟣 Purples (Anchor States)
-          anchor: '#BF92FF',            // anchorlight – active anchor state
-          anchorDark: '#5B3690',        // mystreef – dark pair for anchor states
+        // 🟣 Purples (Anchoring / Locked States)
+        anchor: '#BF92FF',            // anchorlight – anchored task border
+        anchorDark: '#5B3690',        // mystreef – dark contrast for anchor text/icon
       
-          // ⚪ Neutrals
-          textBright: '#FAF7F0',        // sandswept – lightest text (titles)
-          textMuted: '#D9D9D9',         // sandstorm – muted text + button backgrounds
+        // ⚪ Neutrals
+        textBright: '#FAF7F0',        // sandswept – lightest text (headings)
+        textMuted: '#D9D9D9',         // sandstorm – placeholder text, soft UI
       
-          // 🔴 Alerts
-          alert: '#FF7E7E',             // shrimpDelight – overtime, error
-          paused: '#FFC07D',            // solarDrift – paused timer
-        },
+        // 🔴 Alerts
+        alert: '#FF7E7E',             // shrimpDelight – error/overtime
+        paused: '#FFC07D',            // solarDrift – paused state timer
+      },
         // Grounded Serenity Theme
         rope: {
           50: '#F7F4F0',

@@ -28,48 +28,72 @@ export const formatTimerDisplay = (seconds: number): string => {
 
 // Format datetime for 12-hour display with AM/PM
 export const formatDateTime = (isoString: string): string => {
-  const date = new Date(isoString);
-  return date.toLocaleTimeString([], { 
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true 
-  });
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid time';
+    }
+    return date.toLocaleTimeString([], { 
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true 
+    });
+  } catch {
+    return 'Invalid time';
+  }
 };
 
 // Get readable time difference
 export const getTimeDiff = (startTime: string, endTime: string): string => {
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-  const diffMs = end.getTime() - start.getTime();
-  const diffMinutes = diffMs / (1000 * 60);
-  
-  const hours = Math.floor(diffMinutes / 60);
-  const minutes = Math.floor(diffMinutes % 60);
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+  try {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return '0m';
+    }
+    
+    const diffMs = end.getTime() - start.getTime();
+    const diffMinutes = diffMs / (1000 * 60);
+    
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = Math.floor(diffMinutes % 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  } catch {
+    return '0m';
   }
-  return `${minutes}m`;
 };
 
 // Format time range in 12-hour format (e.g., "9:00 AM - 10:30 AM")
 export const formatTimeRange = (startTime: string, endTime: string): string => {
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-  
-  const startStr = start.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-  
-  const endStr = end.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-  
-  return `${startStr} - ${endStr}`;
+  try {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 'Invalid time range';
+    }
+    
+    const startStr = start.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    const endStr = end.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    return `${startStr} - ${endStr}`;
+  } catch {
+    return 'Invalid time range';
+  }
 };
 
 // Create a duplicate task with reset anchor status
@@ -84,4 +108,30 @@ export const duplicateTask = (task: Task): Task => {
     actualDuration: undefined,
     status: undefined
   };
+};
+
+// Get estimated end time for a tether
+export const getEstimatedEndTime = (tether: Tether): string | null => {
+  try {
+    if (!tether.startTime) return null;
+    
+    const start = new Date(tether.startTime);
+    if (isNaN(start.getTime())) return null;
+    
+    const totalDuration = getTotalDuration(tether);
+    const endTime = new Date(start.getTime() + totalDuration * 60000); // Add duration in milliseconds
+    
+    if (isNaN(endTime.getTime())) return null;
+    
+    return formatDateTime(endTime.toISOString());
+  } catch {
+    return null;
+  }
+};
+
+// Calculate total duration of all tasks in a tether
+export const getTotalDuration = (tether: Tether): number => {
+  return tether.tasks.reduce((total, task) => {
+    return total + (task.duration || 0);
+  }, 0);
 };

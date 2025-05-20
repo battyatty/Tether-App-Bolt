@@ -27,7 +27,9 @@ const STORAGE_KEYS = {
   TETHERS: 'tether_app_tethers',
   HISTORY: 'tether_app_history',
   ACTIVE_TETHER: 'tether_app_active',
-  LAST_SYNC: 'tether_app_last_sync'
+  LAST_SYNC: 'tether_app_last_sync',
+  TASK_START: 'tether_app_task_start',
+  ACTIVE_ID: 'tether_app_active_id'
 } as const;
 
 export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -43,6 +45,8 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const storedTethers = localStorage.getItem(STORAGE_KEYS.TETHERS);
         const storedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
         const storedActiveTether = localStorage.getItem(STORAGE_KEYS.ACTIVE_TETHER);
+        const storedTaskStart = localStorage.getItem(STORAGE_KEYS.TASK_START);
+        const storedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_ID);
         
         if (storedTethers) {
           const parsedTethers = JSON.parse(storedTethers);
@@ -62,20 +66,21 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           }
         }
         
-        if (storedActiveTether) {
+        if (storedActiveTether && storedTaskStart && storedActiveId) {
           const parsedActiveTether = JSON.parse(storedActiveTether);
           if (parsedActiveTether && 
               parsedActiveTether.id && 
               parsedActiveTether.startTime && 
               parsedActiveTether.endTime) {
-            setActiveTether(parsedActiveTether);
-            const taskStartIndex = parsedActiveTether.currentTaskIndex;
-            const previousTasksDuration = parsedActiveTether.tasks
-              .slice(0, taskStartIndex)
-              .reduce((total, task) => total + (task.actualDuration || task.duration), 0);
-            const startTime = new Date(parsedActiveTether.startTime);
-            const taskStart = new Date(startTime.getTime() + previousTasksDuration * 60 * 1000);
-            setTaskStartTime(taskStart);
+            
+            // Only restore if IDs match
+            if (parsedActiveTether.id === storedActiveId) {
+              setActiveTether({
+                ...parsedActiveTether,
+                actualStartTime: storedTaskStart
+              });
+              setTaskStartTime(new Date(storedTaskStart));
+            }
           }
         }
 
@@ -117,8 +122,14 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       if (activeTether) {
         localStorage.setItem(STORAGE_KEYS.ACTIVE_TETHER, JSON.stringify(activeTether));
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_ID, activeTether.id);
+        if (activeTether.actualStartTime) {
+          localStorage.setItem(STORAGE_KEYS.TASK_START, activeTether.actualStartTime);
+        }
       } else {
         localStorage.removeItem(STORAGE_KEYS.ACTIVE_TETHER);
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_ID);
+        localStorage.removeItem(STORAGE_KEYS.TASK_START);
       }
       localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
     } catch (error) {
@@ -219,8 +230,12 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       };
 
       setActiveTether(newActiveTether);
-      setTaskStartTime(new Date(startTime));
+      setTaskStartTime(now);
       updateTether(id, tetherToStart.name, tetherToStart.tasks, tetherToStart.startTime);
+      
+      // Store task start time
+      localStorage.setItem(STORAGE_KEYS.TASK_START, now.toISOString());
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_ID, id);
     }
   };
 
@@ -280,56 +295,60 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setHistory((prev) => [...prev, summary]);
     setActiveTether(null);
     setTaskStartTime(null);
+    
+    // Clear stored task data
+    localStorage.removeItem(STORAGE_KEYS.TASK_START);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_ID);
 
     return summary;
   };
 
   const pauseTether = () => {
-  if (!activeTether || activeTether.isPaused) return;
+    if (!activeTether || activeTether.isPaused) return;
 
-  const pausedAt = new Date().toISOString();
+    const pausedAt = new Date().toISOString();
 
-  setActiveTether((prev) =>
-    prev
-      ? {
-          ...prev,
-          isRunning: false,
-          isPaused: true,
-          pausedAt,
-        }
-      : null
-  );
-};
+    setActiveTether((prev) =>
+      prev
+        ? {
+            ...prev,
+            isRunning: false,
+            isPaused: true,
+            pausedAt,
+          }
+        : null
+    );
+  };
 
   const resumeTether = () => {
-  if (!activeTether || !activeTether.isPaused || !activeTether.pausedAt) return;
+    if (!activeTether || !activeTether.isPaused || !activeTether.pausedAt) return;
 
-  const now = new Date();
-  const pausedAt = new Date(activeTether.pausedAt);
-  const secondsPaused = Math.floor((now.getTime() - pausedAt.getTime()) / 1000);
+    const now = new Date();
+    const pausedAt = new Date(activeTether.pausedAt);
+    const secondsPaused = Math.floor((now.getTime() - pausedAt.getTime()) / 1000);
 
-  const updatedTasks = activeTether.tasks.map((task, index) => {
-    if (index === activeTether.currentTaskIndex) {
-      return {
-        ...task,
-        pausedDuration: (task.pausedDuration || 0) + secondsPaused,
-      };
-    }
-    return task;
-  });
+    const updatedTasks = activeTether.tasks.map((task, index) => {
+      if (index === activeTether.currentTaskIndex) {
+        return {
+          ...task,
+          pausedDuration: (task.pausedDuration || 0) + secondsPaused,
+        };
+      }
+      return task;
+    });
 
-  setActiveTether((prev) =>
-    prev
-      ? {
-          ...prev,
-          isRunning: true,
-          isPaused: false,
-          pausedAt: undefined,
-          tasks: updatedTasks,
-        }
-      : null
-  );
-};
+    setActiveTether((prev) =>
+      prev
+        ? {
+            ...prev,
+            isRunning: true,
+            isPaused: false,
+            pausedAt: undefined,
+            tasks: updatedTasks,
+          }
+        : null
+    );
+  };
 
   const completeTask = () => {
     if (!activeTether || !taskStartTime) return;
@@ -369,6 +388,7 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     const newTaskStartTime = new Date(now.getTime());
     setTaskStartTime(newTaskStartTime);
+    localStorage.setItem(STORAGE_KEYS.TASK_START, newTaskStartTime.toISOString());
     
     setActiveTether((prev) => 
       prev ? {
@@ -393,6 +413,7 @@ export const TetherProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const nextTaskIndex = currentTaskIndex + 1;
     const now = new Date();
     setTaskStartTime(now);
+    localStorage.setItem(STORAGE_KEYS.TASK_START, now.toISOString());
 
     const updatedTasks = activeTether.tasks.map((task, index) => 
       index === currentTaskIndex 

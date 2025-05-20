@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Tether, Task } from '../types';
 import TaskCard from './TaskCard';
-import { Plus, Save, Clock, Blocks, ChevronDown, ChevronRight } from 'lucide-react';
-import { generateId, formatDateTime } from '../utils/helpers';
+import { Plus, Save, Clock, Blocks, ChevronDown, ChevronRight, X, CalendarPlus } from 'lucide-react';
+import { generateId, formatDateTime, formatTime } from '../utils/helpers';
 import { useKitblock } from '../context/KitblockContext';
 
 interface TetherFormProps {
@@ -20,6 +20,7 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel }) => 
   const [startTime, setStartTime] = useState<string>(tether?.startTime || '');
   const [useFixedStartTime, setUseFixedStartTime] = useState(!!tether?.startTime);
   const [showKitblockModal, setShowKitblockModal] = useState(false);
+  const [showCalendarImport, setShowCalendarImport] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   
   // Quick add task state
@@ -182,7 +183,7 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel }) => 
   const estimatedEndTime = getEstimatedEndTime();
   
   return (
-    <div className="bg-rope-50 rounded-lg shadow-md p-6">
+    <div className="bg-rope-50 rounded-lg shadow-md p-6 pb-[140px]">
       <div className="mb-6">
         <label htmlFor="tetherName" className="block text-sm font-medium text-navy-800 mb-1">
           Tether Name*
@@ -294,7 +295,7 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel }) => 
         </Droppable>
       </DragDropContext>
       
-      <div className="sticky bottom-0 bg-rope-50 pt-4 border-t border-rope-100">
+      <div className="sticky bottom-[70px] bg-rope-50 pt-4 border-t border-rope-100">
         <form onSubmit={handleAddTask} className="grid grid-cols-[1fr,auto,auto,auto] gap-2 items-start mb-4">
           <input
             type="text"
@@ -338,35 +339,50 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel }) => 
             <Plus size={18} />
           </button>
         </form>
-
-        <button
-          onClick={() => setShowKitblockModal(true)}
-          className="w-full flex items-center justify-center px-3 py-2 bg-navy-500 hover:bg-navy-600 text-white rounded-lg transition-colors text-sm mb-4"
-        >
-          <Blocks size={16} className="mr-1.5" />
-          Insert Block
-        </button>
       </div>
-      
-      <div className="flex justify-end space-x-3">
-        <button
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-navy-700 bg-rope-100 rounded-md hover:bg-rope-200 focus:outline-none focus:ring-2 focus:ring-navy-500"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSaveTether}
-          disabled={!name.trim() || tasks.length === 0}
-          className={`px-4 py-2 text-sm font-medium text-white rounded-md flex items-center focus:outline-none focus:ring-2 ${
-            !name.trim() || tasks.length === 0
-              ? 'bg-navy-300 cursor-not-allowed'
-              : 'bg-navy-500 hover:bg-navy-600 focus:ring-navy-500'
-          }`}
-        >
-          <Save size={16} className="mr-2" />
-          Save Tether
-        </button>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-Tidewake-background px-4 py-3 border-t border-Tidewake-accentSoft z-50">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onCancel}
+              className="w-10 h-10 rounded-full bg-Tidewake-card text-Tidewake-icon flex items-center justify-center"
+            >
+              <X size={18} />
+            </button>
+
+            <button
+              onClick={() => setShowCalendarImport(true)}
+              className="w-10 h-10 rounded-full bg-Tidewake-card text-Tidewake-icon flex items-center justify-center"
+            >
+              <CalendarPlus size={18} />
+            </button>
+
+            <button
+              onClick={() => setShowKitblockModal(true)}
+              className="w-10 h-10 rounded-full bg-Tidewake-card text-Tidewake-icon flex items-center justify-center"
+            >
+              <Blocks size={18} />
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              if (name.trim() && tasks.length > 0) {
+                onSave(name.trim(), tasks, useFixedStartTime ? startTime : undefined);
+              }
+            }}
+            disabled={!name.trim() || tasks.length === 0}
+            className={`px-4 py-2 rounded-full text-sm font-semibold shadow flex items-center ${
+              !name.trim() || tasks.length === 0
+                ? 'bg-Tidewake-textMuted text-Tidewake-background cursor-not-allowed'
+                : 'bg-Tidewake-accentSoft text-Tidewake-buttonBg hover:bg-Tidewake-tealAccent'
+            }`}
+          >
+            <Save size={16} className="mr-2" />
+            Save
+          </button>
+        </div>
       </div>
 
       {showKitblockModal && (

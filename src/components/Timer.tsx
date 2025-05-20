@@ -19,52 +19,55 @@ const Timer: React.FC<TimerProps> = ({
   taskStartTimestamp,
   pausedDuration = 0
 }) => {
-  const [timeLeft, setTimeLeft] = useState(
-    duration * 60 - pausedDuration
-  );
-  const [isOvertime, setIsOvertime] = useState(timeLeft <= 0);
+  const [timeLeft, setTimeLeft] = useState(duration * 60);
+  const [isOvertime, setIsOvertime] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
- useEffect(() => {
-  if (!taskStartTimestamp || isNaN(new Date(taskStartTimestamp).getTime())) {
-    console.warn('Invalid or missing taskStartTimestamp:', taskStartTimestamp);
-    return;
-  }
-
-  const secondsSinceStart = Math.floor(
-    (Date.now() - new Date(taskStartTimestamp).getTime()) / 1000
-  );
-
-  const updatedTimeLeft = Math.max(duration * 60 - secondsSinceStart, -3600);
-
-  setTimeLeft(updatedTimeLeft);
-  setIsOvertime(updatedTimeLeft <= 0);
-}, [taskStartTimestamp, duration]);
-  
   useEffect(() => {
-    if (!isRunning) return;
+    if (!taskStartTimestamp || isNaN(new Date(taskStartTimestamp).getTime())) {
+      console.warn('Invalid or missing taskStartTimestamp:', taskStartTimestamp);
+      return;
+    }
 
-    intervalRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev > 0 && !isOvertime) return prev - 1;
-        setIsOvertime(true);
-        return prev - 1;
-      });
-    }, 1000);
+    const calculateTimeLeft = () => {
+      const start = new Date(taskStartTimestamp).getTime();
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - start) / 1000);
+      const adjustedElapsed = elapsedSeconds - pausedDuration;
+      const remaining = (duration * 60) - adjustedElapsed;
+      
+      setTimeLeft(remaining);
+      setIsOvertime(remaining <= 0);
+
+      if (remaining <= 0 && showAlert && audioRef.current) {
+        audioRef.current.play().catch(err => console.error('Sound error:', err));
+      }
+    };
+
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Initial calculation
+    calculateTimeLeft();
+
+    // Start new interval if running
+    if (isRunning) {
+      intervalRef.current = setInterval(calculateTimeLeft, 1000);
+    }
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [isRunning, isOvertime]);
+  }, [taskStartTimestamp, duration, isRunning, pausedDuration, showAlert]);
 
-  useEffect(() => {
-    if (timeLeft === 0 && showAlert && audioRef.current) {
-      audioRef.current.play().catch(err => console.error('Sound error:', err));
-    }
-  }, [timeLeft, showAlert]);
-
-  const displayTime = formatTimerDisplay(Math.abs(timeLeft));
+  const progress = Math.max(0, Math.min(1, (duration * 60 - timeLeft) / (duration * 60)));
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -74,9 +77,10 @@ const Timer: React.FC<TimerProps> = ({
       />
       <RadialTimer
         timeLeft={timeLeft}
-        duration={duration}
+        duration={duration * 60}
+        progress={progress}
         isOvertime={isOvertime}
-        displayTime={displayTime}
+        displayTime={formatTimerDisplay(Math.abs(timeLeft))}
         isRunning={isRunning}
       />
     </div>
