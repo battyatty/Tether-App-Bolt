@@ -6,16 +6,43 @@ export default {
       colors: {
        // Tidewake Theme
         Tidewake: {
-          tidewake: '#F7F4F0',
-          100: '#EDE5DA',
-          200: '#E2D5C5',
-          300: '#D7C5B0',
-          400: '#CCB59B',
-          500: '#C1A78F',
-          600: '#B69780',
-          700: '#AB8771',
-          800: '#A07762',
-          900: '#956753'
+          // 🌊 Core Blues
+          background: '#6389C9',        // tetherBlue – app background
+          backgroundAlt: '#6992D6',     // tetherBlue2 – slight variation for selections
+          cardShadow: '#587EBF',        // deckShadow – card shadows
+          text: '#556996',              // primaryTextBlue – body text
+          icon: '#535992',              // iconRoyal – button icons
+          card: '#DBE9FF',              // fogBank – card background
+          accentSoft: '#A0D6FF',        // seaBurst – hover/edge accents
+          sectionHeader: '#89B0EE',     // babyBlanket – section titles, pause button
+          noteBackground: '#B2CFFF',    // sirenFog – task notes background
+          anchorInactive: '#98B0D7',    // sirenFog2 – off anchor states
+          textAlt: '#426092',           // cornflowerFaded – secondary text
+          buttonBg: '#2D4877',          // cornflower – button 3, radial bg
+          accentKB: '#0F2E4D',          // deepCurrent – kitblock accents, focus OFF
+      
+          // 🐚 Teals (Core Motion / Flow)
+          playIcon: '#138C76',          // serpentine – play button icon
+          playRing: '#54D9C1',          // kelpglow – ring around play
+          timer: '#87E4D3',             // tidewake – radial & countdown color
+          tealAccent: '#A3F9DD',        // driftglass – icon highlight
+          tealAccentAlt: '#B6FFF2',     // driftglass2 – decorative hover
+      
+          // 🟢 Greens (Success / Active)
+          success: '#B0FA98',           // limarita – complete button, progress bar, glow
+          successIcon: '#569F3B',       // plankton – checkmark
+      
+          // 🟣 Purples (Anchor States)
+          anchor: '#BF92FF',            // anchorlight – active anchor state
+          anchorDark: '#5B3690',        // mystreef – dark pair for anchor states
+      
+          // ⚪ Neutrals
+          textBright: '#FAF7F0',        // sandswept – lightest text (titles)
+          textMuted: '#D9D9D9',         // sandstorm – muted text + button backgrounds
+      
+          // 🔴 Alerts
+          alert: '#FF7E7E',             // shrimpDelight – overtime, error
+          paused: '#FFC07D',            // solarDrift – paused timer
         },
         // Grounded Serenity Theme
         rope: {
