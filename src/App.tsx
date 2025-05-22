@@ -6,11 +6,10 @@ import TetherPage from './pages/TetherPage';
 import KitblocksPage from './pages/KitblocksPage';
 import TetherForm from './components/TetherForm';
 import { useTether } from './context/TetherContext';
-import { Clock, Blocks, Settings, Check, ChevronLeft } from 'lucide-react';
 
 // App wrapper to use context
 const AppContent: React.FC = () => {
-  const { tethers, createTether, updateTether, startTether, activeTether } = useTether();
+  const { tethers, createTether, updateTether, startTether, activeTether, deleteTether } = useTether();
   const [view, setView] = useState<'dashboard' | 'create' | 'edit' | 'active' | 'blocks'>('dashboard');
   const [editingTetherId, setEditingTetherId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -115,6 +114,12 @@ const AppContent: React.FC = () => {
     setView('edit');
   };
 
+  const handleDeleteTether = (id: string) => {
+    deleteTether(id);
+    setEditingTetherId(null);
+    setView('dashboard');
+  };
+
   const handleThemeSelect = (themeId: string) => {
     setCurrentTheme(themeId);
     setShowThemes(false);
@@ -141,8 +146,7 @@ const AppContent: React.FC = () => {
       
       case 'create':
         return (
-          <div className="container mx-auto max-w-2xl p-6">
-            <h1 className={`text-2xl font-bold ${currentThemeColors.text} mb-6`}>Create New Tether</h1>
+          <div className="container mx-auto max-w-2xl">
             <TetherForm
               onSave={handleCreateTether}
               onCancel={() => setView('dashboard')}
@@ -154,38 +158,16 @@ const AppContent: React.FC = () => {
         const tetherToEdit = tethers.find(t => t.id === editingTetherId);
         return (
           <div className="container mx-auto max-w-2xl">
-            <div className="relative flex items-center justify-center h-14 px-4 mb-4">
-              <button 
-                onClick={() => {
+            {tetherToEdit && (
+              <TetherForm
+                tether={tetherToEdit}
+                onSave={handleUpdateTether}
+                onCancel={() => {
                   setEditingTetherId(null);
                   setView('dashboard');
                 }}
-                className="absolute left-4 w-9 h-9 bg-Tidewake-buttonBg text-Tidewake-textBright rounded-full flex items-center justify-center shadow"
-              >
-                <ChevronLeft size={20} />
-              </button>
-
-              <h1 className="text-lg font-bold text-Tidewake-textBright">Edit Tether</h1>
-
-              <button 
-                onClick={() => setShowSettings(true)}
-                className="absolute right-4 w-9 h-9 bg-Tidewake-buttonBg text-Tidewake-textBright rounded-full flex items-center justify-center shadow"
-              >
-                <Settings size={20} />
-              </button>
-            </div>
-
-            {tetherToEdit && (
-              <div className="px-6">
-                <TetherForm
-                  tether={tetherToEdit}
-                  onSave={handleUpdateTether}
-                  onCancel={() => {
-                    setEditingTetherId(null);
-                    setView('dashboard');
-                  }}
-                />
-              </div>
+                onDelete={handleDeleteTether}
+              />
             )}
           </div>
         );

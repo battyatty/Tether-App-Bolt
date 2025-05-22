@@ -3,13 +3,13 @@ import { Task } from '../types';
 import Timer from './Timer';
 import { formatDateTime } from '../utils/helpers';
 import { CheckCircle, SkipForward, Clock, FileText } from 'lucide-react';
+import { useTether } from '../context/TetherContext';
 
 interface ActiveTaskProps {
   task: Task;
   isRunning: boolean;
   onComplete: () => void;
   onSkip: () => void;
-  currentTime: string;
   estimatedEndTime: string;
   isOverdue: boolean;
 }
@@ -19,11 +19,12 @@ const ActiveTask: React.FC<ActiveTaskProps> = ({
   isRunning,
   onComplete,
   onSkip,
-  currentTime,
   estimatedEndTime,
   isOverdue,
 }) => {
   const [showAlert, setShowAlert] = useState(false);
+  const { taskStartTime } = useTether();
+  const isoStartTime = taskStartTime?.toISOString() || '';
   
   useEffect(() => {
     if (isOverdue) {
@@ -34,14 +35,10 @@ const ActiveTask: React.FC<ActiveTaskProps> = ({
   return (
     <div className="flex flex-col items-center">
       <div className="w-full bg-white rounded-lg shadow-sm p-6 mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-sm text-gray-500 flex items-center">
+        <div className="text-center mb-4">
+          <div className="text-sm text-gray-500 flex items-center justify-center">
             <Clock size={14} className="mr-1" />
-            <span>Current: {formatDateTime(currentTime)}</span>
-          </div>
-          <div className="text-sm text-gray-500 flex items-center">
-            <Clock size={14} className="mr-1" />
-            <span>End: {formatDateTime(estimatedEndTime)}</span>
+            <span>Estimated end: {formatDateTime(estimatedEndTime)}</span>
           </div>
         </div>
         
@@ -51,27 +48,17 @@ const ActiveTask: React.FC<ActiveTaskProps> = ({
         
         <div className="flex justify-center mb-8">
           <Timer
-            key={task.id} //forces new instance of Timer on task switch
+            key={`${task.id}-${isRunning}`}
             duration={task.duration}
             isRunning={isRunning}
             onComplete={() => {}}
             showAlert={showAlert}
-            taskStartTimestamp={task.actualStartTime || ''}
+            taskStartTimestamp={isoStartTime}
             pausedDuration={task.pausedDuration || 0}
           />
         </div>
         
-        {task.notes && (
-          <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 flex items-center mb-2">
-              <FileText size={14} className="mr-1" />
-              Notes
-            </h3>
-            <p className="text-gray-600 text-sm whitespace-pre-line">{task.notes}</p>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={onSkip}
             className="flex items-center justify-center py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
@@ -88,6 +75,16 @@ const ActiveTask: React.FC<ActiveTaskProps> = ({
             Complete
           </button>
         </div>
+        
+        {task.notes && (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-700 flex items-center mb-2">
+              <FileText size={14} className="mr-1" />
+              Notes
+            </h3>
+            <p className="text-gray-600 text-sm whitespace-pre-line">{task.notes}</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, MoreVertical, Play } from 'lucide-react';
 import { Draggable } from '@hello-pangea/dnd';
-import { Tether } from '../types';
+import { Tether, ActiveTether } from '../types';
 import { formatTime, getEstimatedEndTime, getTotalDuration } from '../utils/helpers';
 
 interface TetherCardProps {
@@ -9,6 +9,7 @@ interface TetherCardProps {
   index: number;
   isDragging: boolean;
   openMenuId: string | null;
+  activeTether: ActiveTether | null;
   onClick: (e: React.MouseEvent, id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -22,6 +23,7 @@ const TetherCard: React.FC<TetherCardProps> = ({
   index,
   isDragging,
   openMenuId,
+  activeTether,
   onClick,
   onEdit,
   onDelete,
@@ -29,6 +31,16 @@ const TetherCard: React.FC<TetherCardProps> = ({
   onStart,
   setOpenMenu,
 }) => {
+  const formatTimeRange = (startTime: string) => {
+    const [hours, minutes] = startTime.split(':');
+    const start = new Date();
+    start.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    
+    const end = new Date(start.getTime() + getTotalDuration(tether) * 60 * 1000);
+    
+    return `${start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} – ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  };
+
   return (
     <Draggable draggableId={tether.id} index={index}>
       {(provided, snapshot) => (
@@ -48,7 +60,7 @@ const TetherCard: React.FC<TetherCardProps> = ({
                 <Clock size={14} className="mr-1 flex-shrink-0" />
                 <span className="truncate">
                   {tether.startTime ? (
-                    getEstimatedEndTime(tether) || `${formatTime(getTotalDuration(tether))} • ${tether.tasks.length} tasks`
+                    formatTimeRange(tether.startTime)
                   ) : (
                     `${formatTime(getTotalDuration(tether))} • ${tether.tasks.length} tasks`
                   )}
@@ -109,7 +121,12 @@ const TetherCard: React.FC<TetherCardProps> = ({
                   e.stopPropagation();
                   onStart(tether.id);
                 }}
-                className="ml-2 p-1.5 bg-Tidewake-playRing text-Tidewake-playIcon hover:bg-Tidewake-tealAccent rounded-full transition-colors"
+                className={`ml-2 p-1.5 rounded-full transition-colors ${
+                  activeTether
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-Tidewake-playRing text-Tidewake-playIcon hover:bg-Tidewake-tealAccent'
+                }`}
+                disabled={!!activeTether}
                 aria-label="Start Tether"
               >
                 <Play size={16} />

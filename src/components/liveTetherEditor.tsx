@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Task } from '../types';
 import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
-import { generateId, duplicateTask } from '../utils/helpers';
+import { duplicateTask, formatDateTime, recalculateEstimatedEndTime } from '../utils/helpers';
+import { useTether } from '../context/TetherContext';
 
 interface LiveTetherEditorProps {
   tasks: Task[];
@@ -19,6 +20,12 @@ const LiveTetherEditor: React.FC<LiveTetherEditorProps> = ({
   onClose,
 }) => {
   const [currentTasks, setCurrentTasks] = useState<Task[]>(tasks);
+  const [estimatedEnd, setEstimatedEnd] = useState(() => recalculateEstimatedEndTime(tasks));
+  const { activeTether, updateTether } = useTether();
+
+  useEffect(() => {
+    setEstimatedEnd(recalculateEstimatedEndTime(currentTasks));
+  }, [currentTasks]);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -53,22 +60,35 @@ const LiveTetherEditor: React.FC<LiveTetherEditorProps> = ({
     setCurrentTasks(newTasks);
   };
 
-  const handleToggleLock = (id: string) => {
-    setCurrentTasks(currentTasks.map(task => 
-      task.id === id 
-        ? { ...task, isAnchored: !task.isAnchored } 
-        : task
-    ));
+  const handleSaveChanges = () => {
+    if (!activeTether) return;
+
+    const updatedTasks = currentTasks.map((task, index) => ({
+      ...task,
+      completed: index < currentTaskIndex,
+      status: index < currentTaskIndex ? 'completed' : 'pending'
+    }));
+
+    // Update the active tether in context
+    updateTether(
+      activeTether.id,
+      activeTether.name,
+      updatedTasks,
+      activeTether.startTime
+    );
+
+    // Call the original onSave prop
+    onSave(updatedTasks);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">Edit Tasks</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Currently on task {currentTaskIndex + 1} of {tasks.length}
-          </p>
+          <span className="text-sm text-gray-600">
+            New End Time: {formatDateTime(estimatedEnd.toISOString())}
+          </span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -80,27 +100,41 @@ const LiveTetherEditor: React.FC<LiveTetherEditorProps> = ({
                   ref={provided.innerRef}
                   className="space-y-3 mb-6"
                 >
-                  {currentTasks.map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                        >
-                          <TaskCard
+                  {currentTasks.map((task, index) => {
+                    const isCompleted = index < currentTaskIndex;
+                    const isSkipped = task.status === 'skipped';
+                    const isCurrent = index === currentTaskIndex;
+
+                  const getStatusVariant = (task: Task, index: number): 'current' | 'completed' | 'skipped' | 'upcoming' => {
+                  if (index === currentTaskIndex) return 'current';
+                  if (task.status === 'skipped') return 'skipped';
+                  if (index < currentTaskIndex) return 'completed';
+                  return 'upcoming';
+                };
+                  
+                    return (
+                      <Draggable key={task.id} draggableId={task.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            <TaskCard
                             task={task}
                             index={index}
                             onEdit={handleEditTask}
                             onDelete={handleDeleteTask}
                             onDuplicate={handleDuplicateTask}
-                            onToggleLock={handleToggleLock}
+                            onToggleLock={() => {}}
                             isDragging={snapshot.isDragging}
+                            statusVariant={getStatusVariant(task, index)}
                           />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
                   {provided.placeholder}
                 </div>
               )}
@@ -119,7 +153,7 @@ const LiveTetherEditor: React.FC<LiveTetherEditorProps> = ({
               Cancel
             </button>
             <button
-              onClick={() => onSave(currentTasks)}
+              onClick={handleSaveChanges}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
             >
               Save Changes

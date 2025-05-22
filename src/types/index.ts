@@ -11,9 +11,17 @@ export interface Task {
   KitblockId?: string;
   KitblockName?: string;
   status?: TaskStatus;
+  pausedDuration?: number;
+  groupLabel?: string;
 }
 
 export type TaskStatus = 'pending' | 'completed' | 'skipped' | 'partial';
+
+export interface TaskGroup {
+  id: string;
+  name: string;
+  tasks: string[]; // Array of task IDs
+}
 
 export interface Kitblock {
   id: string;
@@ -28,6 +36,7 @@ export interface Tether {
   id: string;
   name: string;
   tasks: Task[];
+  groups?: TaskGroup[];
   createdAt: string;
   lastUsed?: string;
   startTime?: string;
@@ -40,6 +49,7 @@ export interface ActiveTether extends Tether {
   isRunning: boolean;
   isPaused: boolean;
   actualStartTime?: string;
+  pausedAt?: string;
 }
 
 export interface TetherSummary {

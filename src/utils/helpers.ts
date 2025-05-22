@@ -135,3 +135,10 @@ export const getTotalDuration = (tether: Tether): number => {
     return total + (task.duration || 0);
   }, 0);
 };
+
+// Calculate estimated end time based on tasks
+export const recalculateEstimatedEndTime = (tasks: Task[]): Date => {
+  const now = new Date();
+  const totalMs = tasks.reduce((sum, task) => sum + (task.duration || 0) * 60000, 0);
+  return new Date(now.getTime() + totalMs);
+};

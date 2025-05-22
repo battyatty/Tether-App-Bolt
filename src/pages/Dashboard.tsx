@@ -20,6 +20,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNew, onEdit, onStart, onR
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'tethers' | 'kitblocks'>('tethers');
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
   
   useEffect(() => {
     if (!activeTether || !activeTether.isRunning) return;
@@ -48,6 +56,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNew, onEdit, onStart, onR
     });
     setSortedTethers(sorted);
   }, [tethers]);
+
+  const handleStartTether = async (id: string) => {
+    try {
+      await onStart(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start tether');
+    }
+  };
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -92,6 +108,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNew, onEdit, onStart, onR
       return <KitblocksPage />;
     }
 
+    if (sortedTethers.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-300px)]">
+          <p className="text-Tidewake-textBright text-lg mb-3">No tethers yet.</p>
+          <button
+            onClick={onCreateNew}
+            className="px-4 py-2 bg-Tidewake-accentSoft text-Tidewake-buttonBg rounded-lg hover:bg-Tidewake-tealAccent transition-colors"
+          >
+            Click here to add a tether
+          </button>
+        </div>
+      );
+    }
+
     return (
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="tethers">
@@ -108,11 +138,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNew, onEdit, onStart, onR
                   index={index}
                   isDragging={false}
                   openMenuId={openMenu}
+                  activeTether={activeTether}
                   onClick={handleCardClick}
                   onEdit={onEdit}
                   onDelete={deleteTether}
                   onDuplicate={duplicateTether}
-                  onStart={onStart}
+                  onStart={handleStartTether}
                   setOpenMenu={setOpenMenu}
                 />
               ))}
@@ -126,6 +157,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateNew, onEdit, onStart, onR
 
   return (
     <div className="relative h-screen bg-Tidewake-background">
+      {error && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-50 text-red-700 px-6 py-4 rounded-lg shadow-lg border border-red-200 whitespace-pre-line">
+          {error}
+        </div>
+      )}
+      
       {/* Main scrollable area */}
       <div className="absolute top-0 left-0 right-0 bottom-[90px] overflow-y-auto z-10 pt-6 pb-[100px]">
         {/* Header */}

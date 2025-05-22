@@ -25,8 +25,13 @@ const Timer: React.FC<TimerProps> = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!taskStartTimestamp || isNaN(new Date(taskStartTimestamp).getTime())) {
-      console.warn('Invalid or missing taskStartTimestamp:', taskStartTimestamp);
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (!isRunning || !taskStartTimestamp || isNaN(new Date(taskStartTimestamp).getTime())) {
       return;
     }
 
@@ -45,16 +50,10 @@ const Timer: React.FC<TimerProps> = ({
       }
     };
 
-    // Clear any existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
     // Initial calculation
     calculateTimeLeft();
 
-    // Start new interval if running
+    // Only start interval if running
     if (isRunning) {
       intervalRef.current = setInterval(calculateTimeLeft, 1000);
     }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Task } from '../types';
 import { formatTime } from '../utils/helpers';
-import { Clock, Anchor, Copy, ChevronUp, ChevronDown } from 'lucide-react';
+import { Clock, Anchor, Copy, ChevronUp, ChevronDown, CheckCircle2 } from 'lucide-react';
 import TaskDetailModal from './taskDetailModal';
 
 interface TaskCardProps {
@@ -12,6 +12,10 @@ interface TaskCardProps {
   onDuplicate: (id: string) => void;
   onToggleLock: (id: string) => void;
   isDragging?: boolean;
+  statusVariant?: 'current' | 'completed' | 'skipped' | 'upcoming';
+  isSelected?: boolean;
+  onSelect?: (event: React.MouseEvent) => void;
+  selectionMode?: boolean;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -21,6 +25,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onDuplicate,
   onToggleLock,
   isDragging = false,
+  statusVariant = 'upcoming',
+  isSelected = false,
+  onSelect,
+  selectionMode = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.name);
@@ -30,6 +38,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [minutes, setMinutes] = useState((task.duration % 60).toString());
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDraggingGesture, setIsDraggingGesture] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const startXRef = useRef(0);
@@ -47,6 +56,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
       if (isEditing) return;
       startXRef.current = e.touches[0].clientX;
       setIsDraggingGesture(true);
+
+      if (onSelect) {
+        const timer = setTimeout(() => {
+          onSelect(new MouseEvent('click'));
+        }, 500);
+        setLongPressTimer(timer);
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -54,9 +70,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
       const currentX = e.touches[0].clientX;
       const diff = currentX - startXRef.current;
       setSwipeOffset(diff);
+
+      // Cancel long press if user starts swiping
+      if (longPressTimer && Math.abs(diff) > 10) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
     };
 
     const handleTouchEnd = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
+
       if (!isDraggingGesture || isEditing) return;
       
       setIsDraggingGesture(false);
@@ -84,7 +111,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         element.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isDraggingGesture, swipeOffset, task.id, onDelete, onDuplicate, isEditing]);
+  }, [isDraggingGesture, swipeOffset, task.id, onDelete, onDuplicate, isEditing, onSelect, longPressTimer]);
 
   const getSwipeIndicatorOpacity = () => {
     const progress = Math.abs(swipeOffset) / swipeThreshold;
@@ -154,7 +181,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't show edit modal if clicking on interactive elements
     if (
       (e.target as HTMLElement).closest('button') ||
       (e.target as HTMLElement).closest('input') ||
@@ -162,12 +188,26 @@ const TaskCard: React.FC<TaskCardProps> = ({
     ) {
       return;
     }
-    setShowTaskDetailModal(true);
+
+    if (selectionMode && onSelect) {
+      onSelect(e);
+    } else {
+      setShowTaskDetailModal(true);
+    }
   };
 
   const handleDuplicate = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDuplicate(task.id);
+  };
+
+  const handleToggleLock = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!task.isAnchored || task.anchoredStartTime) {
+      onToggleLock(task.id);
+    } else {
+      setShowTaskDetailModal(true);
+    }
   };
 
   return (
@@ -188,20 +228,33 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Task card */}
-        <div 
+        <div
           ref={cardRef}
           onClick={handleCardClick}
-          className={`relative bg-white rounded-lg shadow-sm border-l-4 ${
-            task.isAnchored ? 'border-purple-500' : 'border-blue-500'
-          } ${isDragging ? 'opacity-50' : 'opacity-100'} transition-all cursor-pointer`}
+          className={`relative rounded-lg shadow-sm border-l-4 ${
+            task.isAnchored && task.anchoredStartTime ? 'border-purple-500' : 'border-blue-500'
+          } ${isDragging ? 'opacity-50' : 'opacity-100'} ${
+            isSelected ? 'bg-blue-50' : ''
+          } transition-all cursor-pointer`}
           style={{
             transform: `translateX(${swipeOffset}px)`,
             transition: isDraggingGesture ? 'none' : 'transform 0.2s ease-out'
           }}
         >
-          <div className="p-3">
+          <div
+            className={`p-3 rounded-lg transition-colors duration-200 ${
+              statusVariant === 'current' ? 'bg-Tidewake-timer text-white border-none' : ''
+            } ${statusVariant === 'completed' ? 'opacity-60 line-through' : ''} ${
+              statusVariant === 'skipped' ? 'opacity-60' : ''
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center min-w-0 flex-1">
+                {selectionMode && (
+                  <div className={`mr-3 ${isSelected ? 'text-blue-500' : 'text-gray-300'}`}>
+                    <CheckCircle2 size={20} />
+                  </div>
+                )}
                 {isEditing ? (
                   <input
                     ref={inputRef}
@@ -239,12 +292,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </div>
                 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleLock(task.id);
-                  }}
+                  onClick={handleToggleLock}
                   className={`p-1.5 rounded-full transition-colors ${
-                    task.isAnchored 
+                    task.isAnchored && task.anchoredStartTime
                       ? 'text-purple-500 hover:bg-purple-50' 
                       : 'text-gray-400 hover:bg-gray-100'
                   }`}
@@ -261,6 +311,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </button>
               </div>
             </div>
+            
+            {task.isAnchored && task.anchoredStartTime && (
+              <div className="mt-2 text-sm text-purple-600">
+                <Clock size={12} className="inline-block mr-1" />
+                Anchored to {task.anchoredStartTime}
+              </div>
+            )}
           </div>
         </div>
       </div>
