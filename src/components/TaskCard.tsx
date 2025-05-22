@@ -42,7 +42,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const startXRef = useRef(0);
+  const startYRef = useRef(0);
   const swipeThreshold = 80;
+  const angleThreshold = 30; // Maximum angle in degrees for horizontal swipe
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -52,9 +54,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
   }, [isEditing]);
 
   useEffect(() => {
+    const calculateAngle = (x: number, y: number): number => {
+      const deltaX = Math.abs(x - startXRef.current);
+      const deltaY = Math.abs(y - startYRef.current);
+      return Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+    };
+
     const handleTouchStart = (e: TouchEvent) => {
       if (isEditing) return;
       startXRef.current = e.touches[0].clientX;
+      startYRef.current = e.touches[0].clientY;
       setIsDraggingGesture(true);
 
       if (onSelect) {
@@ -67,14 +76,28 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isDraggingGesture || isEditing) return;
+      
       const currentX = e.touches[0].clientX;
-      const diff = currentX - startXRef.current;
-      setSwipeOffset(diff);
+      const currentY = e.touches[0].clientY;
+      const angle = calculateAngle(currentX, currentY);
+      
+      // Only allow horizontal swipe if angle is less than threshold
+      if (angle < angleThreshold) {
+        const diff = currentX - startXRef.current;
+        setSwipeOffset(diff);
 
-      // Cancel long press if user starts swiping
-      if (longPressTimer && Math.abs(diff) > 10) {
-        clearTimeout(longPressTimer);
-        setLongPressTimer(null);
+        // Cancel long press if user starts swiping
+        if (longPressTimer && Math.abs(diff) > 10) {
+          clearTimeout(longPressTimer);
+          setLongPressTimer(null);
+        }
+      } else {
+        // Reset swipe if angle is too vertical
+        setSwipeOffset(0);
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          setLongPressTimer(null);
+        }
       }
     };
 

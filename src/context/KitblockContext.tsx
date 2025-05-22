@@ -81,6 +81,38 @@ export const KitblockProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const deleteKitblock = (id: string) => {
+    // Get all tethers from localStorage
+    const tethersStr = localStorage.getItem('tether_app_tethers');
+    if (tethersStr) {
+      try {
+        const tethers = JSON.parse(tethersStr);
+        
+        // Update tasks in all tethers
+        const updatedTethers = tethers.map((tether: any) => ({
+          ...tether,
+          tasks: tether.tasks.map((task: Task) => {
+            if (task.KitblockId === id) {
+              // Convert KitBlock tasks to regular grouped tasks
+              return {
+                ...task,
+                KitblockId: undefined,
+                KitblockName: undefined,
+                // Keep the group label to maintain visual grouping
+                groupLabel: task.groupLabel
+              };
+            }
+            return task;
+          })
+        }));
+
+        // Save updated tethers back to localStorage
+        localStorage.setItem('tether_app_tethers', JSON.stringify(updatedTethers));
+      } catch (error) {
+        console.error('Error updating tethers after KitBlock deletion:', error);
+      }
+    }
+
+    // Remove the KitBlock from the library
     setKitblocks(prev => prev.filter(block => block.id !== id));
   };
 

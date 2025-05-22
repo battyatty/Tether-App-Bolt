@@ -3,8 +3,9 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Task } from '../types';
 import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
+import CalendarImport from './CalendarImport';
 import { Plus, Blocks, Clock, ChevronDown, ChevronRight, X, CalendarPlus, Trash, ArrowLeft, Settings, CheckSquare, Save, FolderPlus, Library } from 'lucide-react';
-import { generateId, formatTime } from '../utils/helpers';
+import { generateId, formatTime, calculateEstimatedEndTime } from '../utils/helpers';
 import { useKitblock } from '../context/KitblockContext';
 
 interface KitBlockSelectorProps {
@@ -82,6 +83,7 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
   const [showKitblockNameInput, setShowKitblockNameInput] = useState(false);
   const [newKitblockName, setNewKitblockName] = useState('');
   const [showKitblockSelector, setShowKitblockSelector] = useState(false);
+  const [estimatedEndTime, setEstimatedEndTime] = useState<string>('');
   
   // Quick add task state
   const [taskName, setTaskName] = useState('');
@@ -101,6 +103,15 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
     const total = tasks.reduce((sum, task) => sum + task.duration, 0);
     setTotalDuration(total);
   }, [tasks]);
+
+  useEffect(() => {
+    if (useFixedStartTime && startTime && tasks.length > 0) {
+      const endTime = calculateEstimatedEndTime(startTime, tasks);
+      setEstimatedEndTime(endTime);
+    } else {
+      setEstimatedEndTime('');
+    }
+  }, [useFixedStartTime, startTime, tasks]);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -384,6 +395,11 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
     setShowKitblockSelector(false);
   };
 
+  const handleCalendarImport = (importedTasks: Task[]) => {
+    setTasks(prev => [...prev, ...importedTasks]);
+    setShowCalendarImport(false);
+  };
+
   const toggleGroupCollapse = (groupLabel: string) => {
     setCollapsedGroups(prev => {
       const newSet = new Set(prev);
@@ -597,6 +613,12 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
                   onChange={(e) => setStartTime(e.target.value)}
                   className="w-full p-2 border border-rope-200 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 bg-white mb-2"
                 />
+                {estimatedEndTime && (
+                  <div className="text-sm text-navy-600 mt-1 flex items-center">
+                    <Clock size={14} className="mr-1" />
+                    Estimated end: {estimatedEndTime}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -654,7 +676,6 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
                   placeholder="0"
                   className="w-16 px-2 py-2 text-sm border border-rope-200 rounded focus:outline-none focus:ring-1 focus:ring-navy-500 bg-white"
                   min="0"
-                  max="59"
                 />
                 <span className="text-sm text-navy-600">m</span>
               </div>
@@ -766,6 +787,14 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
           </div>
         </div>
       </div>
+
+      {/* Calendar Import Modal */}
+      {showCalendarImport && (
+        <CalendarImport
+          onImport={handleCalendarImport}
+          onClose={() => setShowCalendarImport(false)}
+        />
+      )}
 
       {/* Group Name Input Modal */}
       {showGroupNameInput && (

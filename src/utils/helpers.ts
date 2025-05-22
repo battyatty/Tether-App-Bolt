@@ -1,3 +1,5 @@
+import { Tether, Task } from '../types';
+
 // Generate a unique ID
 export const generateId = (): string => {
   return Math.random().toString(36).substring(2, '9');
@@ -108,6 +110,30 @@ export const duplicateTask = (task: Task): Task => {
     actualDuration: undefined,
     status: undefined
   };
+};
+
+// Calculate estimated end time based on start time and tasks
+export const calculateEstimatedEndTime = (startTime: string, tasks: Task[]): string => {
+  try {
+    if (!startTime) return '';
+    
+    const [hours, minutes] = startTime.split(':');
+    if (!hours || !minutes) return '';
+    
+    const start = new Date();
+    start.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    const totalMinutes = tasks.reduce((sum, task) => sum + task.duration, 0);
+    const end = new Date(start.getTime() + totalMinutes * 60 * 1000);
+    
+    return end.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch {
+    return '';
+  }
 };
 
 // Get estimated end time for a tether
