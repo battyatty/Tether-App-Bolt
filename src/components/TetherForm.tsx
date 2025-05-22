@@ -4,7 +4,7 @@ import { Task } from '../types';
 import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
 import CalendarImport from './CalendarImport';
-import { Plus, Blocks, Clock, ChevronDown, ChevronRight, X, CalendarPlus, Trash, ArrowLeft, Settings, CheckSquare, Save, FolderPlus, Library } from 'lucide-react';
+import { Plus, Blocks, Clock, ChevronDown, ChevronRight, Copy, X, CalendarPlus, Trash, ArrowLeft, Settings, CheckSquare, Save, FolderPlus, Library } from 'lucide-react';
 import { generateId, formatTime, calculateEstimatedEndTime } from '../utils/helpers';
 import { useKitblock } from '../context/KitblockContext';
 
@@ -478,10 +478,11 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
               {!isKitBlock && (
                 <button
                   onClick={() => handleGroupToKitblock(groupLabel)}
-                  className="ml-2 p-2 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                  className="ml-2 p-2 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap"
                   title="Convert to KitBlock"
                 >
-                  <Library size={16} />
+                   <span className="text-xs font-bold">+</span>
+                  <Blocks size={16} />
                 </button>
               )}
             </div>
@@ -703,16 +704,20 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
                   <button
                     onClick={handleBulkDelete}
                     disabled={selectedTasks.size === 0}
-                    className="px-4 py-2 text-red-500 bg-red-50 rounded-full hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 text-red-500 bg-red-50 rounded-full hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 whitespace-nowra"
+                    title="Delete selected tasks"
                   >
-                    Delete ({selectedTasks.size})
+                    <Trash size={16} />
+                    <span className="text-sm">({selectedTasks.size})</span>
                   </button>
                   <button
                     onClick={handleBulkDuplicate}
                     disabled={selectedTasks.size === 0}
-                    className="px-4 py-2 text-blue-500 bg-blue-50 rounded-full hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 text-blue-500 bg-blue-50 rounded-full hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 whitespace-nowrap"
+                    title="Duplicate selected tasks"
                   >
-                    Duplicate ({selectedTasks.size})
+                    <Copy size={16} />
+                    <span className="text-sm">({selectedTasks.size})</span>
                   </button>
                   <button
                     onClick={() => setShowGroupNameInput(true)}
@@ -727,12 +732,20 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
                     disabled={selectedTasks.size === 0}
                     className="px-4 py-2 text-emerald-500 bg-emerald-50 rounded-full hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                   >
-                    <Library size={16} />
-                    Save as KitBlock
+                    <Blocks size={16} />
+                    New KitBlock ({selectedTasks.size})
                   </button>
                 </>
               ) : (
                 <>
+                  {onDelete && tether && (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors"
+                    >
+                      <Trash size={18} />
+                    </button> 
+                  )}
                   <button
                     onClick={toggleBulkActions}
                     className="w-10 h-10 rounded-full bg-rope-100 text-navy-600 hover:bg-rope-200 flex items-center justify-center transition-colors"
@@ -751,14 +764,6 @@ const TetherForm: React.FC<TetherFormProps> = ({ tether, onSave, onCancel, onDel
                   >
                     <Blocks size={18} />
                   </button>
-                  {onDelete && tether && (
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors"
-                    >
-                      <Trash size={18} />
-                    </button>
-                  )}
                 </>
               )}
             </div>
